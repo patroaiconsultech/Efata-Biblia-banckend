@@ -1,0 +1,32 @@
+{
+  "essencial": {
+    "name": "Essencial",
+    "price_brl": "29.90",
+    "access_days": 30,
+    "features": [
+      "Leitura bíblica sem custo adicional",
+      "Reflexões e estudos guiados",
+      "Cota de IA a definir após homologação"
+    ]
+  },
+  "jornada": {
+    "name": "Jornada",
+    "price_brl": "59.90",
+    "access_days": 30,
+    "features": [
+      "Tudo do Essencial",
+      "Estudos e jornadas aprofundadas",
+      "Cota de IA ampliada a definir após homologação"
+    ]
+  },
+  "aprofundar": {
+    "name": "Aprofundar",
+    "price_brl": "99.90",
+    "access_days": 30,
+    "features": [
+      "Tudo do Jornada",
+      "Estudo intensivo e continuidade",
+      "Cota máxima de IA a definir após homologação"
+    ]
+  }
+}

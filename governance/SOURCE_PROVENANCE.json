@@ -1,0 +1,9 @@
+{
+  "product": "BIBLE_API_EFATA777",
+  "source_artifact": "EFATA777_RC014_COMPLETO_ADMIN_ANALYTICS_AO01(2).zip",
+  "source_sha256": "64513d1ddc51c049fef86e47c5f952303cbf627af08d15876ed97678534ea888",
+  "source_release": "0.14.0-rc-admin-analytics",
+  "source_git_commit": null,
+  "bootstrap_git_commit": null,
+  "note": "New independent repo candidate. Prior history cannot be reconstructed from ZIP. Check original checksums under upstream/."
+}

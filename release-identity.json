@@ -1,0 +1,13 @@
+{
+  "release_id": "BIBLE-API-EFATA777",
+  "display_version": "0.14.0-rc-admin-analytics",
+  "component": "backend",
+  "channel": "development-candidate",
+  "namespace": "bible_platform",
+  "schema_head": "008_bible_faith_preferences",
+  "content_source": "bible-livre",
+  "content_source_version": "2025.1.0",
+  "sse_schema": "bible.sse.v1",
+  "security_profile": "oidc-r1-r1-r1",
+  "commit": "UNCOMMITTED_CANDIDATE_FOR_AO01"
+}
