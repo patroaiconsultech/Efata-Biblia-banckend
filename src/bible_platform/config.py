@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, SecretStr
 
-AuthMode = Literal["demo", "oidc"]
+AuthMode = Literal["demo", "oidc", "native_session"]
 
 
 def env_bool(name: str, default: bool) -> bool:
@@ -44,6 +44,21 @@ class Settings(BaseModel):
     oidc_tenant_claim: str = "tenant_id"
     oidc_roles_claim: str = "roles"
     restricted_data_key: SecretStr | None = None
+    native_registration_enabled: bool = False
+    native_password_reset_enabled: bool = False
+    native_session_cookie_name: str = "__Host-bible_session"
+    native_session_ttl_hours: int = 12
+    native_session_secret: SecretStr | None = None
+    native_public_origin: str | None = None
+    native_login_max_attempts: int = 8
+    native_login_window_minutes: int = 15
+    native_reset_ttl_minutes: int = 20
+    native_smtp_host: str | None = None
+    native_smtp_port: int = 587
+    native_smtp_user: str | None = None
+    native_smtp_password: SecretStr | None = None
+    native_smtp_from: str | None = None
+
     content_source_id: str = "bible-livre"
     content_source_version: str = "2025.1.0"
     rate_limit_per_minute: int = 60
@@ -59,10 +74,37 @@ class Settings(BaseModel):
         return all((self.oidc_issuer, self.oidc_audience, self.oidc_introspection_endpoint, self.oidc_client_id, self.oidc_client_secret))
 
     def validate_runtime(self) -> None:
-        if self.production and self.auth_mode != "oidc":
-            raise ValueError("BIBLE_PRODUCTION_REQUIRES_OIDC")
+        if self.production and self.auth_mode != "native_session":
+            raise ValueError("BIBLE_PRODUCTION_REQUIRES_NATIVE_SESSION")
+        if self.auth_mode == "native_session":
+            if not self.database_url:
+                raise ValueError("BIBLE_NATIVE_DATABASE_REQUIRED")
+            if not self.native_session_secret or len(self.native_session_secret.get_secret_value()) < 32:
+                raise ValueError("BIBLE_NATIVE_SESSION_SECRET_REQUIRED")
+            if self.native_session_ttl_hours < 1 or self.native_session_ttl_hours > 168:
+                raise ValueError("BIBLE_NATIVE_SESSION_TTL_INVALID")
+            if self.production:
+                if self.native_session_cookie_name != "__Host-bible_session":
+                    raise ValueError("BIBLE_NATIVE_HOST_COOKIE_REQUIRED")
+                from urllib.parse import urlparse
+                origin = urlparse(self.native_public_origin or "")
+                if origin.scheme != "https" or not origin.netloc or origin.path not in ("", "/") or origin.username or origin.password or origin.query or origin.fragment:
+                    raise ValueError("BIBLE_NATIVE_PUBLIC_ORIGIN_INVALID")
+            if self.native_password_reset_enabled and not all((
+                self.native_smtp_host, self.native_smtp_user, self.native_smtp_password, self.native_smtp_from
+            )):
+                raise ValueError("BIBLE_NATIVE_SMTP_REQUIRED")
         if self.production and not self.database_url and self.database_required:
             raise ValueError("BIBLE_PRODUCTION_DATABASE_REQUIRED")
+        if self.production and self.database_url:
+            from sqlalchemy.engine import make_url
+            try:
+                if make_url(self.database_url).get_backend_name() != "postgresql":
+                    raise ValueError("BIBLE_PRODUCTION_POSTGRESQL_REQUIRED")
+            except ValueError:
+                raise
+            except Exception as exc:
+                raise ValueError("BIBLE_PRODUCTION_DATABASE_URL_INVALID") from exc
         if self.auth_mode == "oidc" and not self.oidc_configured:
             raise ValueError("BIBLE_OIDC_CONFIGURATION_INCOMPLETE")
         if self.production and not self.restricted_data_key:
@@ -93,6 +135,20 @@ def get_settings() -> Settings:
         oidc_tenant_claim=os.getenv("BIBLE_OIDC_TENANT_CLAIM", "tenant_id"),
         oidc_roles_claim=os.getenv("BIBLE_OIDC_ROLES_CLAIM", "roles"),
         restricted_data_key=SecretStr(raw_key) if raw_key else None,
+        native_registration_enabled=env_bool("BIBLE_NATIVE_REGISTRATION_ENABLED", False),
+        native_password_reset_enabled=env_bool("BIBLE_NATIVE_PASSWORD_RESET_ENABLED", False),
+        native_session_cookie_name=os.getenv("BIBLE_NATIVE_SESSION_COOKIE_NAME", "__Host-bible_session"),
+        native_session_ttl_hours=int(os.getenv("BIBLE_NATIVE_SESSION_TTL_HOURS", "12")),
+        native_session_secret=SecretStr(os.environ["BIBLE_NATIVE_SESSION_SECRET"]) if os.getenv("BIBLE_NATIVE_SESSION_SECRET") else None,
+        native_public_origin=(os.getenv("BIBLE_NATIVE_PUBLIC_ORIGIN") or "").rstrip("/") or None,
+        native_login_max_attempts=int(os.getenv("BIBLE_NATIVE_LOGIN_MAX_ATTEMPTS", "8")),
+        native_login_window_minutes=int(os.getenv("BIBLE_NATIVE_LOGIN_WINDOW_MINUTES", "15")),
+        native_reset_ttl_minutes=int(os.getenv("BIBLE_NATIVE_RESET_TTL_MINUTES", "20")),
+        native_smtp_host=os.getenv("BIBLE_NATIVE_SMTP_HOST") or None,
+        native_smtp_port=int(os.getenv("BIBLE_NATIVE_SMTP_PORT", "587")),
+        native_smtp_user=os.getenv("BIBLE_NATIVE_SMTP_USER") or None,
+        native_smtp_password=SecretStr(os.environ["BIBLE_NATIVE_SMTP_PASSWORD"]) if os.getenv("BIBLE_NATIVE_SMTP_PASSWORD") else None,
+        native_smtp_from=os.getenv("BIBLE_NATIVE_SMTP_FROM") or None,
         content_source_id=os.getenv("BIBLE_CONTENT_SOURCE_ID", "bible-livre"),
         content_source_version=os.getenv("BIBLE_CONTENT_SOURCE_VERSION", "2025.1.0"),
         rate_limit_per_minute=int(os.getenv("BIBLE_RATE_LIMIT_PER_MINUTE", "60")),

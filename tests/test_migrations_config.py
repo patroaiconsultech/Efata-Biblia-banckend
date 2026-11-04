@@ -32,7 +32,7 @@ def test_migration_runs_against_explicit_database_without_premature_schema(tmp_p
     assert result.returncode == 0, result.stderr[-1500:]
     engine = create_engine(url)
     with engine.connect() as conn:
-        assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar() == "008_bible_faith_preferences"
+        assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar() == "009_bible_native_auth"
 
 
 def test_migration_fails_closed_in_staging_without_postgres(tmp_path):

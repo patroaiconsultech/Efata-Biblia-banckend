@@ -36,7 +36,7 @@ class BiblePrincipal(BaseModel):
     scopes: tuple[str, ...] = ()
     issuer: str = "demo"
     subject: str = "demo"
-    auth_method: Literal["demo", "oidc"] = "demo"
+    auth_method: Literal["demo", "oidc", "native_session"] = "demo"
 
 
 class Corpus(BaseModel):

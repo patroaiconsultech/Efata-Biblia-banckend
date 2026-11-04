@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 import httpx
-from fastapi import Header, HTTPException
+from fastapi import Header, HTTPException, Request
 
 from bible_platform.config import get_settings
 from bible_platform.domain_models import BiblePrincipal, Role
@@ -87,18 +87,24 @@ def _verify_oidc(token: str) -> BiblePrincipal:
 
 
 def get_principal(
+    request: Request,
     authorization: Annotated[str | None, Header()] = None,
     x_tenant_id: Annotated[str | None, Header()] = None,
     x_user_id: Annotated[str | None, Header()] = None,
     x_role: Annotated[str | None, Header()] = None,
 ) -> BiblePrincipal:
     settings = get_settings()
+    if settings.auth_mode == "native_session":
+        if authorization or x_tenant_id or x_user_id or x_role:
+            raise auth_error("AUTH_CONTEXT_CONFLICT", "Identidade enviada pelo navegador é proibida.")
+        from bible_platform.native_auth import resolve_session
+        return resolve_session(request)[0]
     if settings.auth_mode == "oidc":
         if x_tenant_id or x_user_id or x_role:
             raise auth_error("AUTH_CONTEXT_CONFLICT", "Headers de identidade controlados pelo browser são proibidos.")
         return _verify_oidc(bearer_value(authorization))
     if settings.production:
-        raise auth_error("AUTH_PROVIDER_REQUIRED", "Produção exige autenticação OIDC.", 503)
+        raise auth_error("AUTH_PROVIDER_REQUIRED", "Produção exige autenticação nativa própria.", 503)
     if authorization:
         raise auth_error("AUTH_CONTEXT_CONFLICT", "Bearer token não é aceito no modo demo.")
     if x_tenant_id not in settings.demo_allowed_tenants or x_user_id not in settings.demo_allowed_users:

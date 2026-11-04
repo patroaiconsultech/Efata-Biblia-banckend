@@ -12,15 +12,12 @@ def main() -> int:
     required = {
         "DATABASE_URL": os.getenv("DATABASE_URL"),
         "BIBLE_RESTRICTED_DATA_KEY": os.getenv("BIBLE_RESTRICTED_DATA_KEY"),
-        "BIBLE_OIDC_ISSUER": os.getenv("BIBLE_OIDC_ISSUER"),
-        "BIBLE_OIDC_AUDIENCE": os.getenv("BIBLE_OIDC_AUDIENCE"),
-        "BIBLE_OIDC_INTROSPECTION_ENDPOINT": os.getenv("BIBLE_OIDC_INTROSPECTION_ENDPOINT"),
-        "BIBLE_OIDC_CLIENT_ID": os.getenv("BIBLE_OIDC_CLIENT_ID"),
-        "BIBLE_OIDC_CLIENT_SECRET": os.getenv("BIBLE_OIDC_CLIENT_SECRET"),
+        "BIBLE_NATIVE_SESSION_SECRET": os.getenv("BIBLE_NATIVE_SESSION_SECRET"),
+        "BIBLE_NATIVE_PUBLIC_ORIGIN": os.getenv("BIBLE_NATIVE_PUBLIC_ORIGIN"),
     }
     missing = [key for key, value in required.items() if not value]
-    if os.getenv("BIBLE_AUTH_MODE", "") != "oidc":
-        missing.append("BIBLE_AUTH_MODE=oidc")
+    if os.getenv("BIBLE_AUTH_MODE", "") != "native_session":
+        missing.append("BIBLE_AUTH_MODE=native_session")
     if missing:
         print("BIBLE_RELEASE_CHECK_FAILED=" + ",".join(missing), file=sys.stderr)
         return 2

@@ -82,6 +82,8 @@ class Store:
         if self.engine is None:
             return not get_settings().production
         required = {"bible_threads", "bible_messages", "bible_progress", "bible_personal_entries", "bible_bookmarks", "bible_highlights", "bible_faith_preferences"}
+        if get_settings().auth_mode == "native_session":
+            required |= {"bible_auth_users", "bible_auth_sessions", "bible_auth_reset_tokens", "bible_auth_login_attempts"}
         return required.issubset(set(inspect(self.engine).get_table_names()))
 
     def create_thread(self, tenant_id: str, user_id: str, thread_id: str, title: str) -> dict[str, Any]:

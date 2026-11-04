@@ -1,52 +1,19 @@
-# Bíblia Sagrada Digital — Bible API
+# EFATÀ 777 — Bible API RC014 native auth candidate
+**Standalone Bible identity. AO-01 review and PostgreSQL staging tests required.**
 
-API independente para leitura, estudo e jornada bíblica. O domínio utiliza o namespace `bible_platform` e não importa módulos internos do ORKIO.
+`BIBLE_AUTH_MODE=native_session` in staging/production, with the new
+`009_bible_native_auth` Alembic migration applied **in an independent gate**
+using a migration DB role. The public registration flag is OFF by default.
+There is no default admin account or OIDC integration.
 
-## Princípios
+Native endpoints: `/api/auth/register`, `/login`, `/session`, `/logout`,
+`/password-reset/request`, `/password-reset/confirm`, `/me`.
+All authenticated writes require `X-CSRF-Token` from `/api/auth/session`
+and an exact `Origin` matching `BIBLE_NATIVE_PUBLIC_ORIGIN`.
 
-A leitura básica não depende do ORKIO ou de um LLM. Dados de diário, oração e memória são restritos e devem ser cifrados. Em produção, a autenticação é fail-closed, o PostgreSQL é obrigatório e migrations devem ser executadas separadamente do boot da aplicação.
+The frontend is the only public browser entry point; the Bible API should be
+Railway-private when platform requirements allow. The user database and
+migrations are completely separate from ORKIO Premium.
 
-## Desenvolvimento local
-
-```bash
-python -m venv .venv
-. .venv/bin/activate
-pip install -e '.[test]'
-cp .env.example .env
-uvicorn bible_platform.main:app --reload --host 0.0.0.0 --port 8080
-```
-
-O modo `demo` é permitido somente fora de produção. Ele exige tenant e usuário presentes nas allowlists. Para produção, configure OIDC/introspection e não use headers de identidade controlados pelo browser.
-
-## Testes
-
-```bash
-pytest -q
-```
-
-## Container
-
-```bash
-docker build -t bible-api:local .
-docker run --rm -p 8080:8080 --env-file .env bible-api:local
-```
-
-## Endpoints iniciais
-
-`/api/health`, `/api/readiness`, `/api/auth/status`, `/api/auth/me`, `/api/works`, `/api/translations`, `/api/works/{work_id}/chapters/{chapter}`, `/api/search`, `/api/reading-plans`, `/api/progress`, `/api/journal` e `/api/conversations/{thread_id}/stream`.
-
-O conteúdo textual só deve ser carregado por ingestão versionada com `SourceRegistry` e `RightsRecord`. O seed inicial não deve incluir tradução moderna sem revisão de direitos.
-\n> RC 0.12-FP1 (local, proposta): cadastro opcional de tradição de fé com consentimento e exclusão; o corpus atual ainda não cobre todos os cânones. Veja `RC012_FAITH_PROFILE_STATUS.md` na raiz do pacote. Sem deploy ou cobrança.\n
-
-## RC 0.14 — Visão administrativa local (somente leitura)
-
-`GET /api/admin/overview`: requer role `admin` validado pelo backend.
-Opera somente com `BIBLE_ENVIRONMENT=local` e um `DATABASE_URL=sqlite:///...` próprio.
-Sem SQLite, retorna HTTP 503; em PostgreSQL/staging/produção, também é bloqueado,
-pois o papel técnico e RLS para agregação multiusuário ainda não foram homologados.
-
-O retorno agrega conversas, mensagens, leituras, favoritos e status de billing de teste,
-sempre limitados ao tenant do principal. **Não exibe** perfis religiosos, orações,
-diários, texto das conversas, dados pessoais ou IDs de usuários. Não tenta calcular
-receita recorrente, custo de tokens, DAU/MAU ou cadastros sem instrumentação.
-O endpoint é GET somente leitura, sem migrations adicionais e com `Cache-Control: no-store`.
+Not yet approved: billing commercial, PWA1, public registration,
+PostgreSQL RLS adversarial validation, SMTP recovery and runtime deployment.

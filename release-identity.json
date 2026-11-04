@@ -1,13 +1,14 @@
 {
   "release_id": "BIBLE-API-EFATA777",
-  "display_version": "0.14.0-rc-admin-analytics",
+  "display_version": "0.14.0-rc-native-auth-bootstrap",
   "component": "backend",
   "channel": "development-candidate",
   "namespace": "bible_platform",
-  "schema_head": "008_bible_faith_preferences",
+  "schema_head": "009_bible_native_auth",
   "content_source": "bible-livre",
   "content_source_version": "2025.1.0",
   "sse_schema": "bible.sse.v1",
-  "security_profile": "oidc-r1-r1-r1",
-  "commit": "UNCOMMITTED_CANDIDATE_FOR_AO01"
+  "security_profile": "native-session-independent-v1",
+  "commit": "UNCOMMITTED_CANDIDATE_FOR_AO01",
+  "parent_artifact_sha256": "64513d1ddc51c049fef86e47c5f952303cbf627af08d15876ed97678534ea888"
 }
