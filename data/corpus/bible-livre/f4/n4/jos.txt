@@ -1,4 +1,4 @@
-\name-long
+﻿\name-long
 Livro de Josué
 \*name-long
 \name-short
