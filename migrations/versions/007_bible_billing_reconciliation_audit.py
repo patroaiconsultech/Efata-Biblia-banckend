@@ -13,6 +13,17 @@ depends_on = None
 
 
 def upgrade():
+    # This revision ID exceeds Alembic's default VARCHAR(32) version column.
+    # Widen the column before Alembic records this revision.
+    if op.get_bind().dialect.name == "postgresql":
+        op.alter_column(
+            "alembic_version",
+            "version_num",
+            existing_type=sa.String(length=32),
+            type_=sa.String(length=64),
+            existing_nullable=False,
+        )
+
     op.create_table(
         "bible_billing_reconciliation_attempts",
         sa.Column("attempt_id", sa.String(64), primary_key=True),
