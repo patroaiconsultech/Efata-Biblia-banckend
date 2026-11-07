@@ -7,7 +7,6 @@ from uuid import uuid4
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-
 from bible_platform.api.routes.auth import router as auth_router
 from bible_platform.admin.overview import router as admin_router
 from bible_platform.api.routes.chat import router as chat_router
@@ -15,11 +14,11 @@ from bible_platform.api.routes.content import router as content_router
 from bible_platform.api.routes.health import router as health_router
 from bible_platform.api.routes.journeys import router as journeys_router
 from bible_platform.api.routes.personal import router as personal_router
+from bible_platform.ai.guide import router as ai_router
 from bible_platform.billing.routes import router as billing_router
 from bible_platform.billing.webhook_inbox import router as billing_webhook_router
 from bible_platform.config import get_settings
 from bible_platform.faith.profile import router as faith_router
-
 settings = get_settings()
 app = FastAPI(
     title=settings.app_name,
@@ -28,7 +27,6 @@ app = FastAPI(
     redoc_url="/redoc" if settings.docs_enabled else None,
     openapi_url="/openapi.json" if settings.docs_enabled else None,
 )
-
 if settings.allowed_origins:
     app.add_middleware(
         CORSMiddleware,
@@ -41,9 +39,7 @@ if settings.allowed_origins:
         ),
         expose_headers=["X-Request-ID"],
     )
-
 _requests: dict[str, deque[float]] = defaultdict(deque)
-
 
 @app.middleware("http")
 async def security_and_request_middleware(request: Request, call_next):
@@ -70,11 +66,9 @@ async def security_and_request_middleware(request: Request, call_next):
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
 
-
 @app.exception_handler(Exception)
 async def safe_exception_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=500, content={"detail": {"code": "BIBLE_INTERNAL_ERROR", "message": "Erro interno.", "request_id": request.headers.get("x-request-id")}})
-
 
 app.include_router(health_router)
 app.include_router(admin_router)
@@ -84,9 +78,9 @@ app.include_router(content_router)
 app.include_router(journeys_router)
 app.include_router(personal_router)
 app.include_router(chat_router)
+app.include_router(ai_router)
 app.include_router(billing_router)
 app.include_router(billing_webhook_router)
-
 
 @app.get("/")
 def root() -> dict[str, object]:
